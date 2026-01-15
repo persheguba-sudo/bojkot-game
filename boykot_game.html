@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Bojkot Bags Game</title>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    height: 100%;
+    overflow: hidden;
+}
+
+#game {
+    position: relative;
+    width: 360px;
+    height: 640px;
+    margin: auto;
+    background: url("background.png") center / cover no-repeat;
+    overflow: hidden;
+}
+
+/* НАЧАЛЬНАЯ ЗАСТАВКА */
+#splashScreen {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: url("splash-screen.png") center / cover no-repeat; /* ← Твоя картинка */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    z-index: 3000;
+    font-family: sans-serif;
+}
+
+#splashScreen .start-button {
+    margin-bottom: 60px;
+    padding: 15px 40px;
+    font-size: 1.5em;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s, background 0.2s;
+}
+#splashScreen .start-button:hover {
+    background: #45a049;
+    transform: scale(1.05);
+}
+
+#splashScreen .instruction {
+    color: white;
+    text-align: center;
+    margin-bottom: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 1.1em;
+}
+
+/* сумка - ТЕПЕРЬ ПРАВИЛЬНО НА ПЛАТФОРМАХ */
+#bag {
+    position: absolute;
+    bottom: 110px; /* ✓ Правильная позиция на платформах */
+    width: 80px;
+    transition: left 0.15s linear;
+}
+
+/* падающие */
+.falling {
+    position: absolute;
+    top: -60px;
+    width: 60px;
+}
+
+/* жизни */
+#lives {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    gap: 6px;
+}
+.life {
+    width: 18px;
+    height: 18px;
+    background: red;
+    border-radius: 50%;
+    opacity: 1;
+}
+.life.dead {
+    opacity: 0.25;
+}
+
+/* Стили для счётчика */
+#score {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    font-family: sans-serif;
+    text-shadow: 2px 2px 2px black;
+    padding: 4px 12px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 20px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Кнопка паузы */
+#pauseButton {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    z-index: 100;
+    font-family: sans-serif;
+    font-size: 14px;
+    border: none;
+    user-select: none;
+}
+#pauseButton:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+#scoreEmoji {
+    font-size: 26px;
+}
+
+/* Общий экран окончания игры */
+#endScreen {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+    z-index: 2000;
+    font-family: sans-serif;
+}
+#endScreen h1 { font-size: 3em; margin-bottom: 20px; }
+#endScreen p { font-size: 1.5em; margin: 10px 0; }
+#restartButton {
+    margin-top: 30px;
+    padding: 12px 30px;
+    font-size: 1.2em;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+#restartButton:hover { background: #45a049; }
+
+/* Стиль для победы */
+.win-style h1 { color: #FFD700; }
+/* Стиль для поражения */
+.lose-style h1 { color: #FF6B6B; }
+
+/* Затемнение при паузе */
+.paused { filter: brightness(0.5); }
+
+/* Адаптивность для мобил */
+@media (max-width: 400px) {
+    #score {
+        font-size: 18px;
+        padding: 3px 10px;
+        right: 5px;
+    }
+    
+    /* Для мобилок можно настроить отдельно, если нужно */
+    #bag {
+        bottom: 110px; /* Можно изменить, если на мобилках выглядит иначе */
+    }
+}
+
+/* Стили для Telegram ссылки */
+.telegram-link {
+    color: #0088cc !important;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+.telegram-link:hover {
+    color: #006699 !important;
+    text-decoration: underline;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+    <!-- НАЧАЛЬНАЯ ЗАСТАВКА -->
+    <div id="splashScreen">
+        <div class="instruction">Собирай котиков, избегай мусора!<br>Нажми на левую или правую половину экрана</div>
+        <button class="start-button">▶️ НАЧАТЬ ИГРУ</button>
+    </div>
+
+    <img id="bag" src="bag.png">
+
+    <div id="lives">
+        <div class="life"></div>
+        <div class="life"></div>
+        <div class="life"></div>
+    </div>
+    
+    <div id="score">
+        <span id="scoreEmoji">🐱</span>
+        <span id="scoreValue">0</span>
+    </div>
+    
+    <!-- Кнопка паузы ВНУТРИ игрового поля -->
+    <button id="pauseButton">⏸️ Пауза</button>
+    
+    <!-- Экраны победы/поражения (изначально скрыты) -->
+    <div id="endScreen" style="display: none;">
+        <h1 id="endTitle">🎉 ПОБЕДА!</h1>
+        <p>Ты собрал <span id="finalScore">0</span> котиков</p>
+        <p><em>Твой Бойкот ждёт</em></p>
+        <button id="restartButton">Играть ещё</button>
+        <p style="font-size: 14px; margin-top: 20px;">
+            <a href="https://t.me/bojkotbags" target="_blank" class="telegram-link">@bojkotbags</a>
+        </p>
+    </div>
+</div>
+
+<script>
+const game = document.getElementById("game");
+const bag = document.getElementById("bag");
+const livesEls = document.querySelectorAll(".life");
+const pauseButton = document.getElementById("pauseButton");
+const endScreen = document.getElementById("endScreen");
+const endTitle = document.getElementById("endTitle");
+const finalScoreEl = document.getElementById("finalScore");
+const restartButton = document.getElementById("restartButton");
+
+// Элементы начальной заставки
+const splashScreen = document.getElementById("splashScreen");
+const startButton = document.querySelector(".start-button");
+
+const cats = ["cat1.png", "cat2.png", "cat3.png"];
+const trash = ["trash1.png", "trash2.png", "trash3.png"];
+
+const LEFT_X = 60;
+const RIGHT_X = 220;
+
+let bagLane = "left";
+let lives = 3;
+let score = 0;
+let active = false; // Изначально игра не активна
+let paused = false;
+let gameStarted = false; // Флаг начала игры
+
+/* СЧЁТЧИК */
+const scoreValueEl = document.getElementById("scoreValue");
+
+/* Инициализация игры */
+function initGame() {
+    bag.style.bottom = "110px";
+    bag.style.left = LEFT_X + "px";
+    scoreValueEl.textContent = "0";
+    livesEls.forEach(life => life.classList.remove("dead"));
+}
+
+/* Запуск игры с начальной заставки */
+startButton.addEventListener("click", () => {
+    splashScreen.style.display = "none";
+    active = true;
+    gameStarted = true;
+    
+    // Запускаем спавн объектов только если игра не была запущена ранее
+    if (!spawnInterval) {
+        spawnInterval = setInterval(spawnObject, 1100);
+    }
+});
+
+/* Управление движением */
+game.addEventListener("click", (e) => {
+    if (!active || paused || !gameStarted) return;
+    // Игнорируем клики по кнопке паузы (чтобы она не мешала управлению)
+    if (e.target.id === "pauseButton") return;
+    
+    const x = e.clientX - game.getBoundingClientRect().left;
+    if (x < game.clientWidth / 2) moveBag("left");
+    else moveBag("right");
+});
+
+function moveBag(side) {
+    if (paused || !active || !gameStarted) return;
+    bagLane = side;
+    bag.style.left = (side === "left" ? LEFT_X : RIGHT_X) + "px";
+}
+
+/* Пауза */
+pauseButton.addEventListener("click", (e) => {
+    if (!gameStarted) return; // Нельзя поставить на паузу, если игра не началась
+    
+    e.stopPropagation(); // Предотвращаем всплытие клика к игровому полю
+    paused = !paused;
+    pauseButton.textContent = paused ? "▶️ Продолжить" : "⏸️ Пауза";
+    game.classList.toggle("paused", paused);
+});
+
+/* Спавн объектов */
+function spawnObject() {
+    if (!active || paused || !gameStarted) return;
+
+    const obj = document.createElement("img");
+    const isCat = Math.random() < 0.6;
+
+    obj.src = isCat
+        ? cats[Math.floor(Math.random() * cats.length)]
+        : trash[Math.floor(Math.random() * trash.length)];
+
+    obj.dataset.type = isCat ? "cat" : "trash";
+    obj.className = "falling";
+
+    const lane = Math.random() < 0.5 ? "left" : "right";
+    obj.style.left = (lane === "left" ? LEFT_X + 10 : RIGHT_X + 10) + "px";
+
+    game.appendChild(obj);
+
+    let y = -60;
+    const fall = setInterval(() => {
+        if (!active || paused || !gameStarted) {
+            clearInterval(fall);
+            obj.remove();
+            return;
+        }
+
+        y += 2;
+        obj.style.top = y + "px";
+
+        if (checkCollision(obj)) {
+            clearInterval(fall);
+            if (obj.dataset.type === "trash") {
+                loseLife();
+            } else {
+                score++;
+                scoreValueEl.textContent = score;
+                if (score >= 10) showEndScreen(true); // Проверка победы
+            }
+            obj.remove();
+        }
+
+        if (y > game.clientHeight) {
+            clearInterval(fall);
+            if (obj.dataset.type === "cat") loseLife();
+            obj.remove();
+        }
+    }, 16);
+}
+
+/* Коллизия */
+function checkCollision(obj) {
+    const b = bag.getBoundingClientRect();
+    const o = obj.getBoundingClientRect();
+
+    return !(
+        o.bottom < b.top ||
+        o.top > b.bottom ||
+        o.right < b.left ||
+        o.left > b.right
+    );
+}
+
+/* Жизни */
+function loseLife() {
+    lives--;
+    if (lives >= 0) livesEls[lives].classList.add("dead");
+    if (lives <= 0) showEndScreen(false); // Поражение
+}
+
+/* Экран окончания игры */
+function showEndScreen(isWin) {
+    active = false;
+    paused = true; // Ставим на паузу при окончании игры
+    pauseButton.textContent = "▶️ Продолжить";
+    game.classList.add("paused");
+    
+    finalScoreEl.textContent = score;
+
+    if (isWin) {
+        endTitle.textContent = "🎉 ПОБЕДА!";
+        endScreen.className = "win-style";
+    } else {
+        endTitle.textContent = "💥 GAME OVER";
+        endScreen.className = "lose-style";
+    }
+
+    endScreen.style.display = "flex";
+}
+
+/* Рестарт игры */
+restartButton.addEventListener("click", () => {
+    // Сброс состояния
+    active = true;
+    paused = false;
+    gameStarted = true;
+    score = 0;
+    lives = 3;
+    bagLane = "left";
+    
+    // Сброс интерфейса
+    initGame();
+    pauseButton.textContent = "⏸️ Пауза";
+    game.classList.remove("paused");
+    
+    // Удаление всех падающих объектов
+    document.querySelectorAll(".falling").forEach(obj => obj.remove());
+    
+    // Скрытие экрана окончания
+    endScreen.style.display = "none";
+    
+    // Перезапуск спавна
+    clearInterval(spawnInterval);
+    spawnInterval = setInterval(spawnObject, 1100);
+});
+
+/* Инициализация при загрузке */
+initGame();
+
+// Не запускаем спавн объектов сразу - ждем нажатия кнопки "Начать игру"
+let spawnInterval = null;
+</script>
+
+</body>
+</html>
