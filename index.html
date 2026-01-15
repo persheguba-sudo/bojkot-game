@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Bojkot Bags Game</title>
 
 <style>
@@ -16,18 +17,18 @@ html, body {
 #game {
     position: relative;
     width: 360px;
-    height: 640px;
+    height: 640px; /* Твой размер */
     margin: auto;
     background: url("background.png") center / cover no-repeat;
     overflow: hidden;
 }
 
-/* НАЧАЛЬНАЯ ЗАСТАВКА */
+/* НАЧАЛЬНАЯ ЗАСТАВКА - 360x640px */
 #splashScreen {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: url("splash-screen.png") center / cover no-repeat; /* ← Твоя картинка */
+    background: url("splash-screen.png") center / cover no-repeat;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -179,20 +180,6 @@ html, body {
 /* Затемнение при паузе */
 .paused { filter: brightness(0.5); }
 
-/* Адаптивность для мобил */
-@media (max-width: 400px) {
-    #score {
-        font-size: 18px;
-        padding: 3px 10px;
-        right: 5px;
-    }
-    
-    /* Для мобилок можно настроить отдельно, если нужно */
-    #bag {
-        bottom: 110px; /* Можно изменить, если на мобилках выглядит иначе */
-    }
-}
-
 /* Стили для Telegram ссылки */
 .telegram-link {
     color: #0088cc !important;
@@ -203,6 +190,39 @@ html, body {
 .telegram-link:hover {
     color: #006699 !important;
     text-decoration: underline;
+}
+
+/* ВОТ ЭТОТ МЕДИАЗАПРОС ДОБАВЬ ДЛЯ МОБИЛОК */
+@media (max-width: 400px) {
+    #game {
+        width: 100vw; /* Занимает всю ширину экрана */
+        height: 100vh; /* Занимает всю высоту экрана */
+        max-width: 360px; /* Но не больше оригинального размера */
+        max-height: 640px;
+        margin: 0 auto; /* Центрируем если экран шире */
+    }
+    
+    #score {
+        font-size: 18px;
+        padding: 3px 10px;
+        right: 5px;
+    }
+    
+    /* Для мобилок можно настроить отдельно, если нужно */
+    #bag {
+        bottom: 110px; /* Можно изменить, если на мобилках выглядит иначе */
+    }
+    
+    /* Увеличиваем кнопки для удобства тапа */
+    #pauseButton {
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+    
+    .start-button {
+        padding: 20px 50px !important;
+        font-size: 1.8em !important;
+    }
 }
 </style>
 </head>
