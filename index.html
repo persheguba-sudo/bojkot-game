@@ -2,8 +2,9 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<!-- Метатег для мобилок -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Bojkot Bags Game</title>
+<title>Бойкот-спринт</title>
 
 <style>
 html, body {
@@ -17,13 +18,13 @@ html, body {
 #game {
     position: relative;
     width: 360px;
-    height: 640px; /* Твой размер */
+    height: 640px;
     margin: auto;
     background: url("background.png") center / cover no-repeat;
     overflow: hidden;
 }
 
-/* НАЧАЛЬНАЯ ЗАСТАВКА - 360x640px */
+/* НАЧАЛЬНАЯ ЗАСТАВКА */
 #splashScreen {
     position: absolute;
     top: 0; left: 0;
@@ -64,16 +65,15 @@ html, body {
     font-size: 1.1em;
 }
 
-/* сумка - ТЕПЕРЬ ПРАВИЛЬНО НА ПЛАТФОРМАХ */
+/* СУМКА - увеличена до 100px */
 #bag {
     position: absolute;
-    bottom: 110px; /* ✓ Правильная позиция на платформах */
-    width: 100px;
-    height: auto;
+    bottom: 110px;
+    width: 100px; /* УВЕЛИЧЕНО С 80px */
     transition: left 0.15s linear;
 }
 
-/* падающие */
+/* падающие объекты */
 .falling {
     position: absolute;
     top: -60px;
@@ -99,7 +99,7 @@ html, body {
     opacity: 0.25;
 }
 
-/* Стили для счётчика */
+/* Счётчик котиков */
 #score {
     position: absolute;
     top: 10px;
@@ -144,7 +144,7 @@ html, body {
     font-size: 26px;
 }
 
-/* Общий экран окончания игры */
+/* Экран окончания игры */
 #endScreen {
     position: absolute;
     top: 0; left: 0;
@@ -193,14 +193,14 @@ html, body {
     text-decoration: underline;
 }
 
-/* ВОТ ЭТОТ МЕДИАЗАПРОС ДОБАВЬ ДЛЯ МОБИЛОК */
+/* АДАПТИВНОСТЬ ДЛЯ МОБИЛОК */
 @media (max-width: 400px) {
     #game {
-        width: 100vw; /* Занимает всю ширину экрана */
-        height: 100vh; /* Занимает всю высоту экрана */
-        max-width: 360px; /* Но не больше оригинального размера */
+        width: 100vw;
+        height: 100vh;
+        max-width: 360px;
         max-height: 640px;
-        margin: 0 auto; /* Центрируем если экран шире */
+        margin: 0 auto;
     }
     
     #score {
@@ -209,9 +209,10 @@ html, body {
         right: 5px;
     }
     
-    /* Для мобилок можно настроить отдельно, если нужно */
+    /* Увеличенная сумка на мобилках */
     #bag {
-        bottom: 110px; /* Можно изменить, если на мобилках выглядит иначе */
+        width: 110px; /* Ещё больше на мобилках */
+        bottom: 110px;
     }
     
     /* Увеличиваем кнопки для удобства тапа */
@@ -250,10 +251,10 @@ html, body {
         <span id="scoreValue">0</span>
     </div>
     
-    <!-- Кнопка паузы ВНУТРИ игрового поля -->
+    <!-- Кнопка паузы -->
     <button id="pauseButton">⏸️ Пауза</button>
     
-    <!-- Экраны победы/поражения (изначально скрыты) -->
+    <!-- Экран победы/поражения -->
     <div id="endScreen" style="display: none;">
         <h1 id="endTitle">🎉 ПОБЕДА!</h1>
         <p>Ты собрал <span id="finalScore">0</span> котиков</p>
@@ -282,15 +283,37 @@ const startButton = document.querySelector(".start-button");
 const cats = ["cat1.png", "cat2.png", "cat3.png"];
 const trash = ["trash1.png", "trash2.png", "trash3.png"];
 
+// ЗВУКИ
+const meowSound = new Audio("meow.wav");
+const trashSound = new Audio("trash.wav");
+
+// Настройки звуков
+meowSound.volume = 0.7;
+trashSound.volume = 0.5;
+meowSound.preload = "auto";
+trashSound.preload = "auto";
+
+// Функция для безопасного проигрывания звука
+function playSound(sound) {
+    if (!soundEnabled) return;
+    
+    sound.currentTime = 0;
+    sound.play().catch(e => {
+        // Игнорируем ошибки автовоспроизведения
+        console.log("Звук не воспроизведён");
+    });
+}
+
 const LEFT_X = 60;
 const RIGHT_X = 220;
 
 let bagLane = "left";
 let lives = 3;
 let score = 0;
-let active = false; // Изначально игра не активна
+let active = false;
 let paused = false;
-let gameStarted = false; // Флаг начала игры
+let gameStarted = false;
+let soundEnabled = true; // Флаг включения звуков
 
 /* СЧЁТЧИК */
 const scoreValueEl = document.getElementById("scoreValue");
@@ -308,8 +331,13 @@ startButton.addEventListener("click", () => {
     splashScreen.style.display = "none";
     active = true;
     gameStarted = true;
+    soundEnabled = true; // Включаем звуки после взаимодействия
     
-    // Запускаем спавн объектов только если игра не была запущена ранее
+    // Предзагрузка звуков для мобилок
+    meowSound.load();
+    trashSound.load();
+    
+    // Запускаем спавн объектов
     if (!spawnInterval) {
         spawnInterval = setInterval(spawnObject, 1100);
     }
@@ -318,7 +346,6 @@ startButton.addEventListener("click", () => {
 /* Управление движением */
 game.addEventListener("click", (e) => {
     if (!active || paused || !gameStarted) return;
-    // Игнорируем клики по кнопке паузы (чтобы она не мешала управлению)
     if (e.target.id === "pauseButton") return;
     
     const x = e.clientX - game.getBoundingClientRect().left;
@@ -334,9 +361,9 @@ function moveBag(side) {
 
 /* Пауза */
 pauseButton.addEventListener("click", (e) => {
-    if (!gameStarted) return; // Нельзя поставить на паузу, если игра не началась
+    if (!gameStarted) return;
     
-    e.stopPropagation(); // Предотвращаем всплытие клика к игровому полю
+    e.stopPropagation();
     paused = !paused;
     pauseButton.textContent = paused ? "▶️ Продолжить" : "⏸️ Пауза";
     game.classList.toggle("paused", paused);
@@ -376,10 +403,12 @@ function spawnObject() {
             clearInterval(fall);
             if (obj.dataset.type === "trash") {
                 loseLife();
+                playSound(trashSound);
             } else {
                 score++;
                 scoreValueEl.textContent = score;
-                if (score >= 10) showEndScreen(true); // Проверка победы
+                playSound(meowSound);
+                if (score >= 10) showEndScreen(true);
             }
             obj.remove();
         }
@@ -409,13 +438,13 @@ function checkCollision(obj) {
 function loseLife() {
     lives--;
     if (lives >= 0) livesEls[lives].classList.add("dead");
-    if (lives <= 0) showEndScreen(false); // Поражение
+    if (lives <= 0) showEndScreen(false);
 }
 
 /* Экран окончания игры */
 function showEndScreen(isWin) {
     active = false;
-    paused = true; // Ставим на паузу при окончании игры
+    paused = true;
     pauseButton.textContent = "▶️ Продолжить";
     game.classList.add("paused");
     
